@@ -100,7 +100,7 @@ class JacquardSubDataset(torch.utils.data.Dataset):
                 for f in grasp_files[:-1]:
                     self.files.append(f.replace('_grasps.txt', ''))
             elif phase == 'test':
-                self.files.append(graps_files[-1].replace('_grasps.txt', ''))
+                self.files.append(grasp_files[-1].replace('_grasps.txt', ''))
         
     def get_rgb(self, idx):
         rgb = imread(self.files[idx] + '_RGB.png')
