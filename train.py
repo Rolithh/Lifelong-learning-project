@@ -1,4 +1,4 @@
-from dataloader import ContinualJacquardLoader
+from data_loader import ContinualJacquardLoader
 from model import load_model, minMSELoss
 
 data_path = 'C:/Users/alexa/OneDrive/Documents/Cours/Cours 3A/MSO - Informatique/Projet/Jacquard/'
