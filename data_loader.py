@@ -2,6 +2,7 @@ import numpy as np
 import os
 import glob
 from imageio import imread
+from skimage import io
 
 import torch
 
@@ -13,8 +14,9 @@ def collate_fn(samples):
     ybatch = []
     
     for x, y in samples:
-        xbatch.append(x.unsqueeze(0))
-        ybatch.append(y)
+        if x is not None:
+            xbatch.append(x.unsqueeze(0))
+            ybatch.append(y)
         
     return torch.cat(xbatch), ybatch
 
@@ -103,11 +105,13 @@ class JacquardSubDataset(torch.utils.data.Dataset):
                 self.files.append(grasp_files[-1].replace('_grasps.txt', ''))
         
     def get_rgb(self, idx):
-        rgb = imread(self.files[idx] + '_RGB.png')
+        #rgb = imread(self.files[idx] + '_RGB.png')
+        rgb = io.imread(self.files[idx] + '_RGB.png')
         return preprocess_rgb(rgb, self.img_size)
     
     def get_depth(self, idx):
-        depth = imread(self.files[idx] + '_perfect_depth.tiff')
+        #depth = imread(self.files[idx] + '_perfect_depth.tiff')
+        depth = io.imread(self.files[idx] + '_perfect_depth.tiff')
         return preprocess_depth(depth, self.img_size)
     
     def get_grasps(self, idx):
@@ -129,17 +133,21 @@ class JacquardSubDataset(torch.utils.data.Dataset):
             return torch.from_numpy(s.astype(np.float32))
     
     def __getitem__(self, index):
-        rgb = self.get_rgb(index)
-        depth = self.get_depth(index)
-        grasps = self.get_grasps(index)
+        try:
+            rgb = self.get_rgb(index)
+            depth = self.get_depth(index)
+            grasps = self.get_grasps(index)
         
-        x = self.numpy_to_torch(
-            np.concatenate((rgb, np.expand_dims(depth, 0)), axis=0)
-        )
+            x = self.numpy_to_torch(
+                np.concatenate((rgb, np.expand_dims(depth, 0)), axis=0)
+                )
         
-        y = self.numpy_to_torch(grasps)
+            y = self.numpy_to_torch(grasps)
         
-        return x, y
+            return x, y
+        except:
+            print('Error loading file')
+            return None, None
     
     def __len__(self):
         return len(self.files)
