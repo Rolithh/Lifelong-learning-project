@@ -12,7 +12,6 @@ def load_model():
     """Load AlexNet model for regression"""
 
     model = torch.hub.load('pytorch/vision:v0.6.0', 'alexnet', pretrained=True)
-    model.eval()
 
 
     # Add one input channel to the first layer
@@ -40,7 +39,7 @@ def load_model():
     return model
 
 
-def minMSELoss(pred, gt):
+def minMSELoss2(pred, gt):
     """loss for training"""
 
     loss = torch.zeros((len(gt)))
@@ -49,4 +48,28 @@ def minMSELoss(pred, gt):
         loss[k] = torch.min(mse)
 
 
-    return loss.mean()
+    return loss
+
+def minMSELoss(pred, gt):
+    """loss for training"""
+
+    k=0
+    maxi =torch.min(torch.sum((pred[k] - gt[k])**2, -1))
+    mini = torch.min(torch.sum((pred[k] - gt[k])**2, -1))
+
+    loss = torch.zeros((len(gt)))
+    for k in range(len(gt)):
+        mse = torch.sum((pred[k] - gt[k])**2, -1)
+        loss[k] = torch.min(mse)
+        if loss[k] < mini:
+            mini = loss[k]
+        if loss[k]>maxi :
+            maxi = loss[k]
+    print(maxi, mini)
+    for k in range(len(gt)):
+        loss[k] =  torch.nn.Parameter(loss[k] / maxi)
+
+
+
+    return loss
+

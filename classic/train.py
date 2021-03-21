@@ -10,6 +10,7 @@ from data_loader2 import ContinualJacquardLoader2
 from model import load_model, minMSELoss
 import torch
 import imagecodecs
+from sklearn.preprocessing import StandardScaler
 
 data_path = './Samples/'
 
@@ -19,6 +20,7 @@ data_path = './Samples/'
 
 def train(n_epochs=3):
     print("###############################FONCTION TRAIN###################################")
+    sts= StandardScaler()#données centrées-réduites –>toutes les colonnes sauf la dernière, la variable cible‘classe
 
     train_data_loader = ContinualJacquardLoader(data_path)
     test_data_loader = ContinualJacquardLoader2(data_path)
@@ -51,6 +53,9 @@ def train(n_epochs=3):
                 print('\n ----- batch ', i, ' ----- \n')
 
                 x, y_gt = batch
+                print("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
+                print(x)
+                print("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
 
                 optimizer.zero_grad()
 
@@ -66,7 +71,10 @@ def train(n_epochs=3):
 
                 #print(loss)
 
+                loss.mean().backward()
                 optimizer.step()
+
+
 
             print('\n computing scores on each task... \n')
 
@@ -123,3 +131,4 @@ if __name__ == "__main__":
 #
 #print('\n --Y_PRED--- ', len(y_pred) , '--Y_PRED---\n')
 #print('\n --Y_PRED--- ', y_pred[0] , '--Y_PRED--- \n')
+
