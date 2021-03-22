@@ -5,24 +5,25 @@ Created on Tue Mar 16 09:30:11 2021
 @author: Laetitia Haye
 """
 
+
 #from data_loader_light2 import ContinualJacquardLoader
 from data_loader import ContinualJacquardLoader
-#from data_loader2 import ContinualJacquardLoader2
+
 from LwFmodel import load_model, create_new_layer, minMSELoss
 import torch
 import copy
+import torch.utils.data
 
-data_path = 'C:/Users/Laetitia Haye/Documents/ECL2/projet info Lifelong learning/jac'
 
 path = '/home/projet17/Jacquard_light2'
+data_path = 'C:/Users/Laetitia Haye/Documents/ECL2/projet info Lifelong learning/jac'
 
 
-def train(n_epochs=1):
+def train(n_epochs=4):
     
 #    train_data_loader = ContinualJacquardLoader(path, 1)
-
     train_data_loader = ContinualJacquardLoader(data_path)
-#    test_data_loader = ContinualJacquardLoader2(data_path)
+
     
     #load a model already trained on a single task
     new_model = load_model()
@@ -41,9 +42,11 @@ def train(n_epochs=1):
         #add some task-specific neurones for the new task
         new_model = create_new_layer(original_model)
         
-        print('\n -- nb de neurones sur la dernière couche avant et après la \
-              nouvelle tâche', original_model.classifier[-1].out_features , \
-              new_model.classifier[-1].out_features, '--\n')
+        nb_old_neurones = original_model.classifier[-1].out_features
+        nb_new_neurones = new_model.classifier[-1].out_features
+        print('\n -- nb de neurones sur la dernière couche avant et après \
+              apprentissage de la tâche en cours : ', nb_old_neurones , ' et ', \
+              nb_new_neurones, '--\n')
           
         
         #Training
@@ -59,24 +62,32 @@ def train(n_epochs=1):
                 
                 print('\n ----- batch ', i, ' ----- \n')
                 
-                #get training data and ground truth for the new task
+                # Normalization vector
+                norm_vect = torch.tensor([1024,  1024,  180,  1024, 1024])
+                
+                # norm_vect repeated number of already trained tasks times
+                nb_old_tasks = int(nb_old_neurones / 5)
+                long_norm_vect = torch.cat([norm_vect] * nb_old_tasks)
+                
+                # Get training data and ground truth for the new task
                 xn, yn_gt = batch
                 
-                #record output of old tasks for new data
+                # Record output of old tasks for new data
                 yo_target = original_model(xn)
+                yo_target_normalized = yo_target / long_norm_vect
                 
-                #compute output for new data with new parameters
+                # Compute output for new data with new parameters
                 yall_pred = new_model(xn)
                 
-                #get output of old tasks (for new data with new parameters)
+                #G et output of old tasks (for new data with new parameters)
                 yo_pred = yall_pred.narrow(1,0,len(yall_pred[0])-5) #(all elements except last 5)
+                yo_pred_normalized = yo_pred / long_norm_vect
                 
-                #get output of new tasks (for new data with new parameters)
+                # Get output of new tasks (for new data with new parameters)
                 yn_pred = yall_pred.narrow(1,len(yall_pred[0])-5, 5) #(only last 5 elements)
-
-                                        
-                print('\n --Yall pred--- ', yall_pred[0] , '--Yall pred--- \n')
-                print('\n --YO target--- ', yo_target[0] , '--YO target--- \n') 
+                yn_pred_normalized = yn_pred / norm_vect
+                               
+                print('\n --Yo target--- ', yo_target[0] , '--Yo target--- \n') 
                 print('\n --Yo pred--- ', yo_pred[0] , '--Yo pred--- \n') 
                 print('\n --Yn pred--- ', yn_pred[0] , '--Yn pred-- \n')
                 
@@ -85,20 +96,21 @@ def train(n_epochs=1):
                                 
                 # Compute loss 
                     # Apply loss to all old tasks
-                old_loss = minMSELoss(yo_pred, yo_target)
+                old_loss = minMSELoss(yo_pred_normalized, yo_target_normalized)
                     # Compute loss for current task
-                new_loss = minMSELoss(yn_pred, yn_gt)
+                for k in range (len(yn_gt)):
+                    yn_gt[k] = yn_gt[k] / norm_vect
+                new_loss = minMSELoss(yn_pred_normalized, yn_gt)
                 
                 loss = old_loss + new_loss
                 
                 print("loss : ", loss)
 
-                # Do backward.
+                # Do backward
                 loss.mean().backward()
                 
+                # Update weights
                 optimizer.step()
-                
-            print('\n computing scores on each task... \n')
         
         #save model
         torch.save(new_model, "model{}".format(task_i))
@@ -143,11 +155,20 @@ if __name__ == "__main__":
 #older tasks changes each time.
 #    
     
-### didn't do
-#adapt distillation loss to regression
+#### didn't do
+#adapt distillation loss to regression (not necessary)
 #warm-up step (fine-tuning on θn only to improve efficiency)
 # what difference between optimizer.zero_grad() and model.zero_grad()?
-#lambda_0
+#lambda_0 (no value given in the paper)
+
+####useless
+#print('\n --Yall pred--- ', yall_pred[0] , '--Yall pred--- \n')
+#from data_loader2 import ContinualJacquardLoader2
+#path2 = '/home/projet17/jac'
+#    test_data_loader = ContinualJacquardLoader2(data_path)
+# print('\n computing scores on each task... \n')
     
-######brouillon    
+  
+
+
 
