@@ -20,7 +20,6 @@ data_path = './Samples/'
 
 def train(n_epochs=3):
     print("###############################FONCTION TRAIN###################################")
-    sts= StandardScaler()#données centrées-réduites –>toutes les colonnes sauf la dernière, la variable cible‘classe
 
     train_data_loader = ContinualJacquardLoader(data_path)
     test_data_loader = ContinualJacquardLoader2(data_path)
@@ -53,21 +52,14 @@ def train(n_epochs=3):
                 print('\n ----- batch ', i, ' ----- \n')
 
                 x, y_gt = batch
-                print("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
-                print(x)
-                print("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
 
                 optimizer.zero_grad()
 
                 y_pred = model(x)
-                print("PREEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEED")
-                print(y_pred)
-                print("===================================================")
 
 
                 loss = minMSELoss(y_pred, y_gt)
 
-                print(loss)
 
                 #print(loss)
 
@@ -76,28 +68,43 @@ def train(n_epochs=3):
 
 
 
-            print('\n computing scores on each task... \n')
+    print('\n computing scores on each task... \n')
+    print("=======================================================================================")
+    for elem in test_data_loader:
+        print(elem)
+    print(test_data_loader)
 
-            for task_j, task_test_data in enumerate(test_data_loader):
+    for task_j, task_test_data in enumerate(test_data_loader):
+        print('\n ----------  training task ', task_j, '  ---------- \n')
+
+        for epoch in range(n_epochs):
+
+            print('\n ------  epoch', epoch, '  ------ \n')
 
 
+            print('\n training model...  \n')
+            for i, batch in enumerate(task_test_data):
 
-                #TO DO (calculate score on task_test_data)
+                print('\n ----- batch ', i, ' ----- \n')
 
-                #for i, batch in enumerate(task_test_data):
-                    #test_x, test_y_gt = batch
-                    #test_y_pred = model(test_x)
-                    #loss = minMSELoss(y_pred, y_gt)
-                    #loss.mean()
+                x_test, y_gt_test = batch
+                optimizer.zero_grad()
 
-                #val = ...
+                y_pred_test = model(x_test)
 
-                val = 42
+                loss_test = minMSELoss(y_pred_test, y_gt_test)
+                #print(loss)
 
-                if task_j in scores:
-                    scores[task_j].append(val)
-                else:
-                    scores.setdefault(task_j ,[val])
+                loss_test.mean().backward()
+                optimizer.step()
+
+
+        print("================================== LOSS ============================")
+        print(loss_test)
+        if task_j in scores:
+            scores[task_j].append(loss_test)
+        else:
+            scores.setdefault(task_j ,[loss])
 
     return scores, n_epochs, model
 

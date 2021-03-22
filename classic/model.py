@@ -67,7 +67,10 @@ def minMSELoss(pred, gt):
             maxi = loss[k]
     print(maxi, mini)
     for k in range(len(gt)):
-        loss[k] =  torch.nn.Parameter(loss[k] / maxi)
+        if k != int(len(gt)/2):
+            loss[k] =  torch.nn.Parameter(loss[k] / 1024)
+        else :
+            loss[k] =  torch.nn.Parameter(loss[k] / 180)
 
 
 
