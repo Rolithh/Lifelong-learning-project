@@ -18,12 +18,13 @@ scores, num_epochs = {"0" : [3,8,12,10,8,6,5,4,4,3,3,2],
                       "2" : [0,1,3,1,2,2,6,11,14,11,8,6],
                       "3" : [0,0,2,1,2,1,1,2,2,5,10,13]}, 3
 
-scores, num_epoch = train()
+scores, num_epochs = train()
 
 def plot(scores, num_epochs):
     """plots the scores for all tasks as a function of training time"""
+    print("................... plotting.......................")
 
-
+    print(scores)
     num_tasks = len(scores.keys())
 
     plt.title("Training curves for different tasks learnt sequentially")
@@ -31,9 +32,9 @@ def plot(scores, num_epochs):
     plt.ylabel("Score")
 
     for key in scores:
-        plt.plot(range(1,num_tasks*num_epochs+1),scores[key],label="task "+str(key))
+        plt.plot(range(1, len(scores[key])+1,1),scores[key],label="task "+str(key))
 
-    plt.ylim((0,15.0)) #remettre entre 0 et 1 qd pb train sera reglé
+    plt.ylim((0,3000)) #remettre entre 0 et 1 qd pb train sera reglé
     plt.xticks(np.arange(1, num_tasks*num_epochs+1, 1.0))
 
     #trace une verticale lorsque la tâche en cours d'apprentissage change
@@ -46,3 +47,4 @@ def plot(scores, num_epochs):
 
 
 plot(scores, num_epochs)
+
