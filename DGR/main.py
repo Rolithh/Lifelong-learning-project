@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+
+# Ce code est essentiellement issu du repo github suivant
+# https://github.com/kuc2477/pytorch-deep-generative-replay
+# Il a été modifié à de nombreux endroits afin de pouvoir traiter notre problème
+
+
 import argparse
 import os.path
 import torch
@@ -8,6 +14,7 @@ from dgr import Scholar
 from models import WGAN, CNN
 from data_loader_light2 import ContinualJacquardLoader 
 
+data_path = "../Jacquard_light2/"
 
 parser = argparse.ArgumentParser(
     'PyTorch implementation of Deep Generative Replay'
@@ -69,9 +76,7 @@ if __name__ == '__main__':
         'channels': 4,
         'classes': 5,
     }
-    #data_path = "/content/drive/My Drive/Jacquard_light2/"
-    data_path = "Jacquard_light2/"
-    #data_path = "C:/Users/alexa/OneDrive/Documents/Cours/Cours 3A/MSO - Informatique/Projet/Jacquard_light/"
+
     dataset = ContinualJacquardLoader(data_path, args.batch_size)
 
 
