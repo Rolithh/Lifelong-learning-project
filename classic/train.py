@@ -4,108 +4,94 @@ Created on Sat Feb  6 11:15:25 2021
 
 @author: Laetitia Haye
 """
-
-from data_loader import ContinualJacquardLoader
-from data_loader2 import ContinualJacquardLoader2
+from tqdm import tqdm
+from data_loader_light2 import ContinualJacquardLoader
 from model import load_model, minMSELoss
 import torch
-import imagecodecs
-from sklearn.preprocessing import StandardScaler
 
-data_path = './Samples/'
+data_path = '../Jacquard_light2'
 
-
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 
-def train(n_epochs=3):
+def train(n_epochs=256):
     print("###############################FONCTION TRAIN###################################")
 
-    train_data_loader = ContinualJacquardLoader(data_path)
-    test_data_loader = ContinualJacquardLoader2(data_path)
-    model = load_model()
+    data_loader = ContinualJacquardLoader(data_path)
+    model = load_model().to(device)
     print("-------------------------------LOAD OK")
 
-    optimizer = torch.optim.SGD(model.parameters(), lr=0.0005)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.0005, weight_decay=0.001, betas=(0.9,0.999))
     print("-------------------------------OPTIMIZER OK")
-    for elem in train_data_loader:
-        print(elem)
-    print(train_data_loader)
 
-    scores = {}
 
-    for task_i, task_data in enumerate(train_data_loader):
+    scores = []
+
+    for task_i, task_data in enumerate(data_loader):
         #there are n_task objects in dataloader (one per task)
         #task_data is a torch.utils.data.dataloader.DataLoader object
         #each task_data object contains several batches
 
         print('\n ----------  training task ', task_i, '  ---------- \n')
+        for epoch in tqdm(range(n_epochs)):
 
-        for epoch in range(n_epochs):
-
-            print('\n ------  epoch', epoch, '  ------ \n')
-
-
-            print('\n training model...  \n')
+           
             for i, batch in enumerate(task_data):
 
-                print('\n ----- batch ', i, ' ----- \n')
 
                 x, y_gt = batch
+                x = x.to(device)
+                y_gt = [yi.to(device) for yi in y_gt]
 
                 optimizer.zero_grad()
 
                 y_pred = model(x)
 
 
-                loss = minMSELoss(y_pred, y_gt)
+                loss = minMSELoss(y_pred, y_gt, device)
 
 
                 #print(loss)
 
-                loss.mean().backward()
+                loss.backward()
                 optimizer.step()
 
 
-
-    print('\n computing scores on each task... \n')
-    print("=======================================================================================")
-    for elem in test_data_loader:
-        print(elem)
-    print(test_data_loader)
-
-    for task_j, task_test_data in enumerate(test_data_loader):
-        print('\n ----------  training task ', task_j, '  ---------- \n')
-
-        for epoch in range(n_epochs):
-
-            print('\n ------  epoch', epoch, '  ------ \n')
-
-
-            print('\n training model...  \n')
+        torch.save(model.state_dict(), "model{}".format(task_i))
+        print('\n computing scores on each task... \n')
+        print("=======================================================================================")
+    
+        score_task = []
+        for task_j in range(len(data_loader)):
+            task_test_data = data_loader.get_data('test', task_j)
+    
+    
+            loss_test = 0
             for i, batch in enumerate(task_test_data):
-
-                print('\n ----- batch ', i, ' ----- \n')
-
+    
+    
                 x_test, y_gt_test = batch
-                optimizer.zero_grad()
+                x_test = x_test.to(device)
+                y_gt_test = [yi.to(device) for yi in y_gt_test]
+    
+                with torch.no_grad():
+                    y_pred_test = model(x_test)
+    
+                    loss_test += minMSELoss(y_pred_test, y_gt_test, device).item()
+    
+    
+    
+    
+    
+            print("================================== LOSS ============================")
+            loss_test /= len(task_test_data)
+            score_task.append(loss)
+            print(loss_test)
+            
+    
 
-                y_pred_test = model(x_test)
-
-                loss_test = minMSELoss(y_pred_test, y_gt_test)
-                #print(loss)
-
-                loss_test.mean().backward()
-                optimizer.step()
-
-
-        print("================================== LOSS ============================")
-        print(loss_test)
-        if task_j in scores:
-            scores[task_j].append(loss_test)
-        else:
-            scores.setdefault(task_j ,[loss])
-
+        scores.append(score_task)
     return scores, n_epochs, model
 
 
