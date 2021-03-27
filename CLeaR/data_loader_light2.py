@@ -6,6 +6,8 @@ import time
 import torch
 
 
+grasp_norm = np.array([1024,1024,180,1024,1024])
+
 
 
 def collate_fn(samples):
@@ -97,7 +99,7 @@ class JacquardSubDataset(torch.utils.data.Dataset):
             
             gs = np.load(file)
             for k in range(len(gs)):
-                self.grasps.append(gs['arr_' + str(k)])
+                self.grasps.append(gs['arr_' + str(k)]/grasp_norm)
             
         self.inputs = np.concatenate(self.inputs, axis=0)
         

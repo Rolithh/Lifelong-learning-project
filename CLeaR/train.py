@@ -4,7 +4,8 @@ from time import sleep
 
 
 
-path = "/content/drive/My Drive/Jacquard_light2/"
+#path = "/content/drive/My Drive/Jacquard_light2/"
+path = "../Jacquard_light2/"
 dataloader = ContinualJacquardLoader(path, 1)
 
 model = CLeaR()

@@ -46,7 +46,7 @@ class Autoencoder(EWCModule):
         dataloader = torch.utils.data.DataLoader(novelties, batch_size=16, shuffle=True)
         
         loss = torch.nn.MSELoss()
-        optimizer = torch.optim.Adam(self.parameters(), lr=0.0001, weight_decay=1e-5, betas=(0.9,0.999))
+        optimizer = torch.optim.Adam(self.parameters(), lr=0.0005, weight_decay=1e-3, betas=(0.9,0.999))
         
         with tqdm(range(epochs), desc="Updating autoencoder", leave=None, postfix=dict(loss=0)) as t:
             for epoch in t :
@@ -96,7 +96,7 @@ class Predictor(EWCModule):
 
         dataloader = torch.utils.data.DataLoader(novelties, batch_size=16, shuffle=True, collate_fn=collate_fn)
         
-        optimizer = torch.optim.Adam(self.parameters(), lr=0.0001, weight_decay=1e-5, betas=(0.9,0.999))
+        optimizer = torch.optim.Adam(self.parameters(), lr=0.0005, weight_decay=1e-3, betas=(0.9,0.999))
         
         with tqdm(range(epochs), desc="Updating predictor", leave=None, postfix=dict(mse=0, ewc=0,loss=0)) as t:
             for epoch in t:
