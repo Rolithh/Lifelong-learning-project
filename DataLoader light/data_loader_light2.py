@@ -1,12 +1,10 @@
 import numpy as np
 import os
 import glob
-from imageio import imread
-from skimage import io
-import time
 import torch
+import torch.utils.data
 
-from preprocess import preprocess_rgb, preprocess_depth, preprocess_grasps
+grasp_norm = np.array([1024,1024,180,1024,1024])
 
 
 def collate_fn(samples):
@@ -98,7 +96,7 @@ class JacquardSubDataset(torch.utils.data.Dataset):
             
             gs = np.load(file)
             for k in range(len(gs)):
-                self.grasps.append(gs['arr_' + str(k)])
+                self.grasps.append(gs['arr_' + str(k)]/grasp_norm)
             
         self.inputs = np.concatenate(self.inputs, axis=0)
         
